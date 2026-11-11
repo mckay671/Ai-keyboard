@@ -25,9 +25,7 @@ jobs:
           java-version: '17'
 
       - name: Check Android SDK
-        run: |
-          echo "Android SDK: $ANDROID_HOME"
-          test -d "$ANDROID_HOME"
+        run: test -d "$ANDROID_HOME"
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
@@ -39,7 +37,25 @@ jobs:
           mkdir -p extracted
           unzip -q ChatGBKeyboard-Android-Starter.zip -d extracted
 
+      - name: Match Java and Kotlin targets
+        shell: bash
+        run: |
+          PROJECT_DIR=$(find extracted -name settings.gradle.kts -printf '%h\n' | head -1)
+          test -n "$PROJECT_DIR"
+          BUILD_FILE="$PROJECT_DIR/app/build.gradle.kts"
+          test -f "$BUILD_FILE"
+          cat >> "$BUILD_FILE" <<'GRADLE'
+
+          android {
+              compileOptions {
+                  sourceCompatibility = JavaVersion.VERSION_17
+                  targetCompatibility = JavaVersion.VERSION_17
+              }
+          }
+          GRADLE
+
       - name: Build APK
+        shell: bash
         run: |
           PROJECT_DIR=$(find extracted -name settings.gradle.kts -printf '%h\n' | head -1)
           test -n "$PROJECT_DIR"
